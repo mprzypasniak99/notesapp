@@ -2,8 +2,8 @@ package com.example.myapplication
 
 import androidx.lifecycle.ViewModel
 import com.example.ktor_client.ApiClient
-import com.example.models.database.Note
 import com.example.models.dto.CreateNoteBody
+import com.example.myapplication.data.model.NoteModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -14,11 +14,11 @@ import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
     private val client = ApiClient()
-    private val _notes = MutableStateFlow<List<Note>>(emptyList())
-    val notes: StateFlow<List<Note>> = _notes.asStateFlow()
+    private val _notes = MutableStateFlow<List<NoteModel>>(emptyList())
+    val notes: StateFlow<List<NoteModel>> = _notes.asStateFlow()
 
     private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.Main + job)
+    private val scope = CoroutineScope(Dispatchers.IO + job)
 
     init {
         loadNotes()
@@ -27,7 +27,7 @@ class MainViewModel : ViewModel() {
     private fun loadNotes() {
         scope.launch {
             val notes = client.getNotes()
-            _notes.value = notes.map { Note(it.id, it.content) }
+            _notes.value = notes.map { NoteModel(it.id, it.content, it.favourite > 0) }
         }
     }
 
@@ -38,9 +38,27 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun deleteNote(note: Note) {
+    fun deleteNote(note: NoteModel) {
         scope.launch {
             client.deleteNote(note.id)
+            loadNotes()
+        }
+    }
+
+    fun updateFavourite(noteId: Long, isFavourite: Boolean) {
+        if (isFavourite) addFavourite(noteId) else deleteFavourite(noteId)
+    }
+
+    private fun addFavourite(noteId: Long) {
+        scope.launch {
+            client.addFavourite(noteId)
+            loadNotes()
+        }
+    }
+
+    private fun deleteFavourite(noteId: Long) {
+        scope.launch {
+            client.deleteFavourite(noteId)
             loadNotes()
         }
     }

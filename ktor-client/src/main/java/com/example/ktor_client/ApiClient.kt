@@ -9,6 +9,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -34,6 +35,16 @@ class ApiClient {
 
     suspend fun deleteNote(id: Long): Boolean {
         val response = client.delete("http://10.0.2.2:8080/note/$id")
+        return response.status == HttpStatusCode.OK
+    }
+    suspend fun addFavourite(id: Long): Boolean {
+        val response =
+            client.put("http://10.0.2.2:8080/favourite/$id")
+        return response.status == HttpStatusCode.Created
+    }
+
+    suspend fun deleteFavourite(id: Long): Boolean {
+        val response = client.delete("http://10.0.2.2:8080/favourite/$id")
         return response.status == HttpStatusCode.OK
     }
 }

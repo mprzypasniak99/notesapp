@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GetNoteBody(
     @SerialName("id") val id: Long,
-    @SerialName("content") val content: String
+    @SerialName("content") val content: String,
+    @SerialName("favourite") val favourite: Long
 )

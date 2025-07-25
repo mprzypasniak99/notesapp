@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,13 +26,18 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.SwipeToDismissBoxValue.*
+import androidx.compose.material3.SwipeToDismissBoxValue.Settled
+import androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -53,7 +59,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.example.models.database.Note
+import com.example.myapplication.data.model.NoteModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -85,9 +91,14 @@ class MainActivity : ComponentActivity() {
                             ),
                     ) {
                         items(notes) { note ->
-                            DismissableNote(modifier = Modifier.animateItem(), note = note) {
-                                viewModel.deleteNote(note)
-                            }
+                            DismissableNote(
+                                modifier = Modifier.animateItem(),
+                                note = note,
+                                onDismiss = {
+                                    viewModel.deleteNote(note)
+                                }, onFavouriteToggle = {
+                                    viewModel.updateFavourite(note.id, it)
+                                })
                         }
                     }
 
@@ -126,7 +137,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DismissableNote(modifier: Modifier = Modifier, note: Note, onDismiss: () -> Unit) {
+fun DismissableNote(modifier: Modifier = Modifier,
+                    note: NoteModel,
+                    onDismiss: () -> Unit,
+                    onFavouriteToggle: (Boolean) -> Unit) {
     val density = LocalDensity.current
     val confirmValueChange = { it: SwipeToDismissBoxValue -> it == StartToEnd }
     val positionalThreshold = { it: Float -> it / 3 * 2}
@@ -176,7 +190,21 @@ fun DismissableNote(modifier: Modifier = Modifier, note: Note, onDismiss: () -> 
         Card(modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)) {
-            Text(modifier = Modifier.padding(16.dp), text = note.content)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Switch(
+                    modifier = Modifier.padding(horizontal = 8.dp).align(Alignment.End),
+                    checked = note.favourite,
+                    onCheckedChange = onFavouriteToggle,
+                    thumbContent = {
+                        Icon(
+                            imageVector = if (note.favourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize)
+                        )
+                    })
+
+                Text(modifier = Modifier.padding(16.dp), text = note.content)
+            }
         }
     }
 }
