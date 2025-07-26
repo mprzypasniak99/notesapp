@@ -17,6 +17,8 @@ class MainViewModel : ViewModel() {
     private val _notes = MutableStateFlow<List<NoteModel>>(emptyList())
     val notes: StateFlow<List<NoteModel>> = _notes.asStateFlow()
 
+    private val _uiState = MutableStateFlow(MainUiState())
+    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
@@ -28,13 +30,18 @@ class MainViewModel : ViewModel() {
         scope.launch {
             val notes = client.getNotes()
             _notes.value = notes.map { NoteModel(it.id, it.content, it.favourite > 0) }
+            _uiState.value = _uiState.value.updateNotesList(_notes.value)
         }
     }
 
-    fun addNote(note: String) {
-        scope.launch {
-            client.addNote(CreateNoteBody(note))
-            loadNotes()
+    fun addNote() {
+        uiState.value.newNoteInput.let { note ->
+            if (note.isNotBlank())
+            scope.launch {
+                client.addNote(CreateNoteBody(note))
+                _uiState.value = _uiState.value.updateNewNoteInput("")
+                loadNotes()
+            }
         }
     }
 
@@ -45,8 +52,8 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateFavourite(noteId: Long, isFavourite: Boolean) {
-        if (isFavourite) addFavourite(noteId) else deleteFavourite(noteId)
+    fun updateFavourite(note: NoteModel, isFavourite: Boolean) {
+        if (isFavourite) addFavourite(note.id) else deleteFavourite(note.id)
     }
 
     private fun addFavourite(noteId: Long) {
@@ -61,6 +68,19 @@ class MainViewModel : ViewModel() {
             client.deleteFavourite(noteId)
             loadNotes()
         }
+    }
+
+    fun updateNoteInput(note: String) {
+        scope.launch {
+            _uiState.value = _uiState.value.updateNewNoteInput(note)
+        }
+    }
+
+    fun changeFilter(filter: NoteFilter) {
+        if (filter != _uiState.value.filter)
+            scope.launch {
+                _uiState.value = _uiState.value.updateFilter(filter, _notes.value)
+            }
     }
 
     override fun onCleared() {
