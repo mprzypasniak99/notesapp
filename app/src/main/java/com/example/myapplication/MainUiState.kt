@@ -14,7 +14,9 @@ data class MainUiState(
 ) {
     fun updateNotesList(notes: List<NoteModel>): MainUiState =
         copy(notes = notes.filter(filter.filterFunction))
+
     fun updateNewNoteInput(input: String): MainUiState = copy(newNoteInput = input)
+
     fun updateFilter(filter: NoteFilter, allNotes: List<NoteModel>): MainUiState =
         copy(
             filter = filter,

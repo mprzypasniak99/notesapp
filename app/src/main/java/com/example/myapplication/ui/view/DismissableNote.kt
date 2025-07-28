@@ -94,6 +94,7 @@ fun DismissableNote(modifier: Modifier = Modifier,
                 Switch(
                     modifier = Modifier.padding(horizontal = 8.dp).align(Alignment.End),
                     checked = note.favourite,
+                    enabled = note.backendId != null,
                     onCheckedChange = onFavouriteToggle,
                     thumbContent = {
                         Icon(
