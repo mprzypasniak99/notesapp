@@ -1,6 +1,7 @@
 package com.example.myapplication.data.workmanager.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.ktor_client.ApiClient
@@ -8,6 +9,7 @@ import com.example.models.dto.CreateNoteBody
 import com.example.myapplication.data.dao.NoteDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.ConnectException
 
 class AddNoteWorker(private val apiClient: ApiClient,
                     private val noteDao: NoteDao,
@@ -23,11 +25,16 @@ class AddNoteWorker(private val apiClient: ApiClient,
         val noteContent = inputData.getString(NOTE_CONTENT_KEY)
 
         if (noteId > 0 && noteContent != null) {
-            val body = CreateNoteBody(noteContent)
-            apiClient.addNote(body)
+            try {
+                val body = CreateNoteBody(noteContent)
+                apiClient.addNote(body)
 
-            noteDao.deleteById(noteId)
-            Result.success()
+                noteDao.deleteById(noteId)
+                Result.success()
+            } catch (_: ConnectException) {
+                Log.w("AddNote", "Failed to connect to backend. Retrying")
+                Result.retry()
+            }
         } else {
             Result.failure()
         }

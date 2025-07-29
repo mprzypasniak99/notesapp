@@ -44,6 +44,9 @@ class NoteTaskDataSource(
             .build()
     }
 
+    fun cancelWorkForNoteId(noteId: Long) {
+        workManager.cancelUniqueWork(getWorkNameForNote(noteId))
+    }
     fun fetchNotes() {
         workManager.enqueueUniqueWork(
             FETCH_NOTES_WORK_NAME,

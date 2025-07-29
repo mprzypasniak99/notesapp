@@ -1,11 +1,14 @@
 package com.example.myapplication.data.workmanager.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.ktor_client.ApiClient
+import com.example.myapplication.data.dao.NoteDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.ConnectException
 
 class DeleteFavouriteNoteWorker(private val apiClient: ApiClient,
                                 context: Context,
@@ -18,9 +21,14 @@ class DeleteFavouriteNoteWorker(private val apiClient: ApiClient,
         val noteId = inputData.getLong(NOTE_ID_KEY, -1)
 
         if (noteId > 0) {
-            apiClient.deleteFavourite(noteId)
+            try {
+                apiClient.deleteFavourite(noteId)
 
-            Result.success()
+                Result.success()
+            } catch (_: ConnectException) {
+                Log.w("DeleteFavourite", "Failed to connect to backend. Retrying")
+                Result.retry()
+            }
         } else {
             Result.failure()
         }

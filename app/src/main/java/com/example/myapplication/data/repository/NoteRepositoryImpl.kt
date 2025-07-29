@@ -73,6 +73,8 @@ class NoteRepositoryImpl(
 
             if (updatedNote.backendId != null) {
                 noteTaskDataSource.deleteNote(updatedNote.backendId)
+            } else {
+                noteTaskDataSource.cancelWorkForNoteId(note.id)
             }
         }
     }
