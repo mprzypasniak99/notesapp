@@ -13,6 +13,7 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import io.ktor.util.logging.error
 import java.util.Properties
@@ -30,7 +31,7 @@ fun Application.module() {
 
         get("/notes") {
             val dbNotes = database.noteQueries.selectAll().executeAsList()
-            val dtoNotes = dbNotes.map { GetNoteBody(it.id, it.content) }
+            val dtoNotes = dbNotes.map { GetNoteBody(it.id, it.content, it.favourite) }
             call.respond(dtoNotes)
         }
 
@@ -44,6 +45,26 @@ fun Application.module() {
             val rowsDeleted = database.noteQueries.delete(correctId).await()
             if (rowsDeleted == 0L) {
                 call.respond(HttpStatusCode.NotFound, "Note with id = $correctId not found")
+            } else {
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        put("/favourite/{id}") {
+            val correctId = verifyCorrectNoteId() ?: return@put
+            val rowsAdded = database.noteQueries.updateFavourite(1, correctId).await()
+            if (rowsAdded == 0L) {
+                call.respond(HttpStatusCode.BadRequest, "Failed to mark note with id = $correctId as favourite")
+            } else {
+                call.respond(HttpStatusCode.Created)
+            }
+        }
+
+        delete("/favourite/{id}") {
+            val correctId = verifyCorrectNoteId() ?: return@delete
+            val rowsDeleted = database.noteQueries.updateFavourite(0, correctId).await()
+            if (rowsDeleted == 0L) {
+                call.respond(HttpStatusCode.NotFound, "Note with id = $correctId not found in favourites")
             } else {
                 call.respond(HttpStatusCode.OK)
             }
